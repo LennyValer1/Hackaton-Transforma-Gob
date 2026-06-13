@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Paciente INEN — OncoRuta</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F0F2F5; min-height: 100vh; display: flex; flex-direction: column; }
+
+.app-wrapper { display: flex; flex-direction: column; height: 100vh; }
+
+.app { display: flex; flex: 1; overflow: hidden; }
+
+.sidebar { width: 230px; flex-shrink: 0; background: #0F3A6E; display: flex; flex-direction: column; }
+.sidebar-logo { padding: 18px 16px 14px; border-bottom: 0.5px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+.logo-badge { background: white; border-radius: 5px; padding: 4px 8px; font-size: 13px; font-weight: 700; color: #0F3A6E; }
+.logo-text { color: white; font-size: 13px; font-weight: 500; line-height: 1.3; }
+.logo-sub { color: rgba(255,255,255,0.55); font-size: 10px; }
+
+.sidebar-user { padding: 12px 16px; border-bottom: 0.5px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: white; flex-shrink: 0; }
+.user-name { color: white; font-size: 12px; font-weight: 500; }
+.user-dni { color: rgba(255,255,255,0.5); font-size: 11px; }
+
+.sidebar-nav { flex: 1; padding: 10px 0; overflow-y: auto; }
+.nav-section { padding: 8px 16px 3px; font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.07em; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.65); transition: all 0.15s; border-left: 3px solid transparent; }
+.nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+.nav-item.active { background: rgba(255,255,255,0.13); color: white; border-left-color: #5BB8F5; }
+.nav-item i { font-size: 17px; }
+.nav-badge { background: #E84B7A; color: white; font-size: 10px; border-radius: 10px; padding: 1px 6px; margin-left: auto; }
+.nav-new { background: #1D9E75; color: white; font-size: 9px; border-radius: 10px; padding: 2px 6px; margin-left: auto; }
+
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { background: white; border-bottom: 1px solid #E8ECF0; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.topbar-title { font-size: 16px; font-weight: 600; color: #1A2332; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.lang-toggle { display: flex; gap: 4px; }
+.lang-btn { padding: 5px 13px; border-radius: 20px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid #D0D7E0; background: white; color: #6B7A90; transition: all 0.15s; }
+.lang-btn.active { background: #185FA5; color: white; border-color: #185FA5; }
+.topbar-user { font-size: 12px; color: #6B7A90; }
+
+.content { flex: 1; padding: 20px 24px; overflow-y: auto; background: #F0F2F5; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+.section-label { font-size: 11px; font-weight: 600; color: #8896A7; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+
+.cards-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+.cards-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 14px; }
+
+.card { background: white; border: 1px solid #E8ECF0; border-radius: 12px; padding: 16px 18px; }
+
+.card-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 20px; }
+.card-icon.blue { background: #EBF4FF; color: #185FA5; }
+.card-icon.pink { background: #FEF0F5; color: #C4426F; }
+.card-icon.teal { background: #E5F7F1; color: #0D6B50; }
+.card-icon.new { background: #EBF4FF; color: #185FA5; border: 1.5px dashed #378ADD; }
+
+.card-title { font-size: 14px; font-weight: 600; color: #1A2332; margin-bottom: 5px; }
+.card-desc { font-size: 12px; color: #6B7A90; line-height: 1.55; margin-bottom: 12px; }
+.card-btn { display: inline-block; padding: 7px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: opacity 0.15s; }
+.card-btn:hover { opacity: 0.88; }
+.card-btn.blue { background: #185FA5; color: white; }
+.card-btn.pink { background: #C4426F; color: white; }
+.card-btn.teal { background: #0D6B50; color: white; }
+.card-new-badge { font-size: 10px; font-weight: 600; background: #EBF4FF; color: #185FA5; padding: 3px 8px; border-radius: 10px; margin-bottom: 8px; display: inline-block; }
+
+.ruta-hero { background: linear-gradient(135deg, #0D2D56 0%, #185FA5 100%); border-radius: 14px; padding: 20px 24px; margin-bottom: 18px; color: white; position: relative; overflow: hidden; }
+.ruta-hero::after { content: ''; position: absolute; right: -30px; top: -30px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.05); }
+.ruta-hero-label { font-size: 11px; opacity: 0.65; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.06em; }
+.ruta-hero-name { font-size: 20px; font-weight: 700; margin-bottom: 3px; }
+.ruta-hero-diag { font-size: 13px; opacity: 0.78; margin-bottom: 12px; }
+.ruta-hero-tag { display: inline-block; background: rgba(255,255,255,0.18); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+
+.stepper-wrap { padding: 4px 0 8px; }
+.stepper { display: flex; align-items: flex-start; }
+.step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+.step:not(:last-child)::after { content: ''; position: absolute; top: 14px; left: 50%; width: 100%; height: 2px; background: #E8ECF0; z-index: 0; }
+.step:not(:last-child).done::after { background: #1D9E75; }
+.step:not(:last-child).inprogress::after { background: linear-gradient(90deg, #1D9E75 50%, #E8ECF0 50%); }
+.step-circle { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; z-index: 1; position: relative; flex-shrink: 0; }
+.step-circle.done { background: #1D9E75; color: white; }
+.step-circle.active { background: #185FA5; color: white; box-shadow: 0 0 0 3px rgba(24,95,165,0.2); }
+.step-circle.pending { background: #F0F2F5; color: #8896A7; border: 1.5px solid #D0D7E0; }
+.step-lbl { font-size: 10px; color: #8896A7; margin-top: 6px; text-align: center; line-height: 1.3; max-width: 64px; }
+.step-lbl.active { color: #185FA5; font-weight: 600; }
+.step-lbl.done { color: #0D6B50; font-weight: 500; }
+
+.info-card { background: white; border: 1px solid #E8ECF0; border-radius: 12px; padding: 14px 18px; margin-bottom: 14px; }
+.info-card-title { font-size: 13px; font-weight: 600; color: #1A2332; margin-bottom: 10px; display: flex; align-items: center; gap: 7px; }
+
+.alert-block { border-radius: 10px; padding: 14px 16px; margin-bottom: 12px; display: flex; gap: 12px; align-items: flex-start; }
+.alert-block.blue { background: #EBF4FF; border: 1px solid #BDD8F7; }
+.alert-block.amber { background: #FEF7EB; border: 1px solid #F9DFA0; }
+.alert-block.green { background: #E8F7F2; border: 1px solid #9FE1CB; }
+.alert-block.pink { background: #FEF0F5; border: 1px solid #F4BBCF; }
+.alert-icon-wrap { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.alert-icon-wrap.blue { color: #185FA5; }
+.alert-icon-wrap.amber { color: #8B5E0A; }
+.alert-icon-wrap.green { color: #0D6B50; }
+.alert-icon-wrap.pink { color: #C4426F; }
+.alert-title { font-size: 13px; font-weight: 600; color: #1A2332; margin-bottom: 4px; }
+.alert-body { font-size: 12px; color: #4A5568; line-height: 1.6; }
+.alert-link { margin-top: 8px; font-size: 12px; font-weight: 600; color: #185FA5; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.alert-link:hover { text-decoration: underline; }
+
+.code-box { background: #F0F2F5; border: 1px solid #D0D7E0; border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+.code-val { font-size: 24px; font-weight: 700; letter-spacing: 0.15em; color: #185FA5; font-family: 'Courier New', monospace; }
+.copy-btn { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: #6B7A90; cursor: pointer; padding: 5px 10px; border-radius: 7px; border: 1px solid #D0D7E0; background: white; transition: all 0.15s; }
+.copy-btn:hover { background: #F0F2F5; }
+
+.reminder-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #F0F2F5; }
+.reminder-row:last-child { border-bottom: none; }
+.reminder-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.reminder-text { font-size: 13px; color: #1A2332; flex: 1; line-height: 1.4; }
+.reminder-sub { font-size: 11px; color: #8896A7; }
+
+.switch { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.sw-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #D0D7E0; border-radius: 21px; transition: .2s; }
+.sw-slider::before { position: absolute; content: ""; height: 15px; width: 15px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .2s; }
+.switch input:checked + .sw-slider { background: #1D9E75; }
+.switch input:checked + .sw-slider::before { transform: translateX(17px); }
+
+.table-simple { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table-simple th { text-align: left; padding: 8px 12px; background: #F7F8FA; color: #8896A7; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #E8ECF0; }
+.table-simple td { padding: 10px 12px; border-bottom: 1px solid #F0F2F5; color: #1A2332; vertical-align: middle; }
+.table-simple tr:last-child td { border-bottom: none; }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.pill.green { background: #E8F7F2; color: #0D6B50; }
+.pill.blue { background: #EBF4FF; color: #185FA5; }
+.pill.amber { background: #FEF7EB; color: #8B5E0A; }
+.pill.gray { background: #F0F2F5; color: #6B7A90; }
+
+.btn-primary { background: #185FA5; color: white; border: none; padding: 9px 20px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+.btn-primary:hover { opacity: 0.88; }
+.btn-secondary { background: white; color: #1A2332; border: 1px solid #D0D7E0; padding: 9px 20px; border-radius: 9px; font-size: 13px; font-weight: 500; cursor: pointer; }
+
+.quechua-box { background: #E8F7F2; border: 1px solid #9FE1CB; border-radius: 10px; padding: 12px 16px; margin-top: 14px; }
+.quechua-label { font-size: 10px; color: #0D6B50; font-weight: 700; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.06em; }
+.quechua-text { font-size: 13px; color: #085041; line-height: 1.6; }
+
+.empty-state { text-align: center; padding: 40px 20px; color: #8896A7; }
+.empty-state i { font-size: 36px; margin-bottom: 10px; display: block; }
+.empty-state p { font-size: 13px; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D0D7E0; border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+  <div class="app">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-badge">INEN</div>
+        <div>
+          <div class="logo-text">Portal Paciente</div>
+          <div class="logo-sub">Ministerio de Salud</div>
+        </div>
+      </div>
+      <div class="sidebar-user">
+        <div class="user-avatar">MQ</div>
+        <div>
+          <div class="user-name">María C. Quispe H.</div>
+          <div class="user-dni">DNI 41203887</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Mis consultas</div>
+        <div class="nav-item" onclick="goTo('resultados')">
+          <i class="ti ti-file-text"></i> Consulta tus resultados
+        </div>
+        <div class="nav-item" onclick="goTo('citas')">
+          <i class="ti ti-calendar"></i> Solicitud de citas <span class="nav-badge">1</span>
+        </div>
+        <div class="nav-item" onclick="goTo('documentos')">
+          <i class="ti ti-folder"></i> Documentos digitales
+        </div>
+        <div class="nav-section" style="margin-top:10px;">Nuevo módulo</div>
+        <div class="nav-item active" onclick="goTo('ruta')">
+          <i class="ti ti-map-2"></i> Mi ruta oncológica <span class="nav-new">Nuevo</span>
+        </div>
+        <div class="nav-section" style="margin-top:10px;">Cuenta</div>
+        <div class="nav-item" onclick="goTo('config')">
+          <i class="ti ti-settings"></i> Configuración
+        </div>
+        <div class="nav-item" onclick="goTo('familiar')">
+          <i class="ti ti-users"></i> Acceso familiar
+        </div>
+      </nav>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-title" id="topbar-title">Mi ruta oncológica</div>
+        <div class="topbar-right">
+          <div class="lang-toggle">
+            <button class="lang-btn active" onclick="setLang('es',this)">🇵🇪 Español</button>
+            <button class="lang-btn" onclick="setLang('qu',this)">🗣️ Quechua</button>
+          </div>
+          <div class="topbar-user">Paciente INEN</div>
+        </div>
+      </div>
+
+      <div class="content">
+
+        <!-- SCREEN: MI RUTA ONCOLÓGICA -->
+        <div class="screen active" id="screen-ruta">
+
+          <div class="ruta-hero">
+            <div class="ruta-hero-label">Paciente en seguimiento diagnóstico</div>
+            <div class="ruta-hero-name" id="hero-name">María C. Quispe Huanca</div>
+            <div class="ruta-hero-diag" id="hero-diag">Sospecha de cáncer de mama · Historia Clínica HC-4192031</div>
+            <div class="ruta-hero-tag" id="hero-tag">⏳ Paso 3 de 5 — Exámenes diagnósticos</div>
+          </div>
+
+          <div class="info-card">
+            <div class="info-card-title"><i class="ti ti-route" style="color:#185FA5;"></i> <span id="stepper-title">Tu progreso en la ruta de diagnóstico</span></div>
+            <div class="stepper-wrap">
+              <div class="stepper">
+                <div class="step done">
+                  <div class="step-circle done"><i class="ti ti-check" style="font-size:13px;"></i></div>
+                  <div class="step-lbl done" id="s1">Admisión</div>
+                </div>
+                <div class="step done">
+                  <div class="step-circle done"><i class="ti ti-check" style="font-size:13px;"></i></div>
+                  <div class="step-lbl done" id="s2">Médico<br>especialista</div>
+                </div>
+                <div class="step inprogress">
+                  <div class="step-circle active">3</div>
+                  <div class="step-lbl active" id="s3">Exámenes<br>diagnósticos</div>
+                </div>
+                <div class="step">
+                  <div class="step-circle pending">4</div>
+                  <div class="step-lbl" id="s4">Resultados</div>
+                </div>
+                <div class="step">
+                  <div class="step-circle pending">5</div>
+                  <div class="step-lbl" id="s5">Diagnóstico<br>final</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="cards-2">
+            <div>
+              <div class="alert-block blue">
+                <div class="alert-icon-wrap blue"><i class="ti ti-calendar-event"></i></div>
+                <div>
+                  <div class="alert-title" id="next-title">Tu próxima cita</div>
+                  <div class="alert-body" id="next-body">
+                    <strong>Lunes 16 de junio, 9:00 a.m.</strong><br>
+                    Departamento de Radiología<br>
+                    Piso 3 — Módulo B, ventanilla 4
+                  </div>
+                  <div class="alert-link" onclick="goTo('citas')">Ver detalle de cita <i class="ti ti-arrow-right" style="font-size:12px;"></i></div>
+                </div>
+              </div>
+
+              <div class="alert-block amber">
+                <div class="alert-icon-wrap amber"><i class="ti ti-clipboard-list"></i></div>
+                <div>
+                  <div class="alert-title" id="docs-title">Documentos que debes llevar</div>
+                  <div class="alert-body" id="docs-body">
+                    ✔ DNI original<br>
+                    ✔ Hoja de referencia de tu centro de salud<br>
+                    ✔ Resultados de ecografía previa (si tienes)
+                  </div>
+                </div>
+              </div>
+
+              <div class="alert-block green">
+                <div class="alert-icon-wrap green"><i class="ti ti-home"></i></div>
+                <div>
+                  <div class="alert-title" id="travel-title">¿Necesitas venir a Lima?</div>
+                  <div class="alert-body" id="travel-body">
+                    Sí, esta cita es <strong>presencial</strong>. Si vienes de provincia, el Servicio Social del INEN puede ayudarte con alojamiento y pasajes.
+                  </div>
+                  <div class="alert-link">Solicitar apoyo de Servicio Social <i class="ti ti-arrow-right" style="font-size:12px;"></i></div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="info-card" style="margin-bottom:14px;">
+                <div class="info-card-title"><i class="ti ti-bell" style="color:#185FA5;"></i> <span id="reminders-title">Recordatorios activos</span></div>
+                <div class="reminder-row">
+                  <div class="reminder-dot" style="background:#1D9E75;"></div>
+                  <div class="flex-1">
+                    <div class="reminder-text" id="r1">SMS al celular 941-XXX-321</div>
+                    <div class="reminder-sub" id="r1s">24 horas antes de cada cita</div>
+                  </div>
+                  <label class="switch"><input type="checkbox" checked><span class="sw-slider"></span></label>
+                </div>
+                <div class="reminder-row">
+                  <div class="reminder-dot" style="background:#185FA5;"></div>
+                  <div class="flex-1">
+                    <div class="reminder-text" id="r2">WhatsApp al celular 941-XXX-321</div>
+                    <div class="reminder-sub" id="r2s">El mismo día de la cita</div>
+                  </div>
+                  <label class="switch"><input type="checkbox" checked><span class="sw-slider"></span></label>
+                </div>
+                <div class="reminder-row">
+                  <div class="reminder-dot" style="background:#C4426F;"></div>
+                  <div class="flex-1">
+                    <div class="reminder-text" id="r3">Recordatorio de documentos</div>
+                    <div class="reminder-sub" id="r3s">48 horas antes de la cita</div>
+                  </div>
+                  <label class="switch"><input type="checkbox"><span class="sw-slider"></span></label>
+                </div>
+              </div>
+
+              <div class="info-card">
+                <div class="info-card-title"><i class="ti ti-users" style="color:#185FA5;"></i> <span id="family-title">Acceso para cuidadora</span></div>
+                <div class="alert-body" id="family-desc">Comparte este código con tu familiar o cuidadora para que pueda ver tu ruta sin necesidad de tu contraseña.</div>
+                <div class="code-box">
+                  <div class="code-val">R-4829</div>
+                  <button class="copy-btn" onclick="copyCode(this)">
+                    <i class="ti ti-copy"></i> Copiar
+                  </button>
+                </div>
+                <div style="margin-top:10px; font-size:11px; color:#8896A7;" id="family-note">El código expira en 7 días. Puedes generar uno nuevo cuando quieras.</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="quechua-section" class="quechua-box" style="display:none;">
+            <div class="quechua-label">🗣️ Traducción al Quechua</div>
+            <div class="quechua-text">
+              <strong>Hamunanki kayman:</strong> Killapi 16 junio, 9:00 a.m. Radiología departamentopi.<br><br>
+              <strong>Apamuy kayta:</strong> DNI originalkita · Hoja de referenciata · Ecografía resultadosniyuqta.<br><br>
+              <strong>Limamanchu rinanki:</strong> Ari, presencialpim kachkan. Servicio Social yanapasunkim alojamientopi.
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SCREEN: CITAS -->
+        <div class="screen" id="screen-citas">
+          <div class="info-card" style="margin-bottom:14px;">
+            <div class="info-card-title"><i class="ti ti-calendar-check" style="color:#185FA5;"></i> Próximas citas programadas</div>
+            <table class="table-simple">
+              <thead>
+                <tr>
+                  <th>Departamento</th>
+                  <th>Fecha y hora</th>
+                  <th>Modalidad</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Radiología</strong><br><span style="font-size:11px;color:#8896A7;">Ecografía mamaria</span></td>
+                  <td>Lun 16 jun · 9:00 a.m.<br><span style="font-size:11px;color:#8896A7;">Piso 3 — Módulo B</span></td>
+                  <td>Presencial</td>
+                  <td><span class="pill blue"><i class="ti ti-circle-dot" style="font-size:10px;"></i> Citada</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="info-card">
+            <div class="info-card-title"><i class="ti ti-history" style="color:#185FA5;"></i> Historial de solicitudes</div>
+            <table class="table-simple">
+              <thead>
+                <tr><th>Departamento</th><th>Fecha solicitud</th><th>Tipo</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Medicina Oncológica</td>
+                  <td>02 jun 2025</td>
+                  <td>Presencial</td>
+                  <td><span class="pill green"><i class="ti ti-check" style="font-size:10px;"></i> Atendida</span></td>
+                </tr>
+                <tr>
+                  <td>Ginecología — Mamas y Tejidos</td>
+                  <td>15 may 2025</td>
+                  <td>Presencial</td>
+                  <td><span class="pill green"><i class="ti ti-check" style="font-size:10px;"></i> Atendida</span></td>
+                </tr>
+                <tr>
+                  <td>Centro de Prev. y Dx. del Cáncer</td>
+                  <td>09 abr 2025</td>
+                  <td>Virtual</td>
+                  <td><span class="pill green"><i class="ti ti-check" style="font-size:10px;"></i> Atendida</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SCREEN: RESULTADOS -->
+        <div class="screen" id="screen-resultados">
+          <div class="info-card" style="margin-bottom:14px;">
+            <div class="info-card-title"><i class="ti ti-file-text" style="color:#185FA5;"></i> Resultados disponibles</div>
+            <table class="table-simple">
+              <thead>
+                <tr><th>Examen</th><th>Sección</th><th>Fecha</th><th>Acción</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Biopsia core</strong><br><span style="font-size:11px;color:#8896A7;">Citometría de flujo</span></td>
+                  <td>Patología</td>
+                  <td>28 may 2025</td>
+                  <td><button class="card-btn blue" style="font-size:11px;padding:4px 10px;">Descargar</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Hemograma completo</strong></td>
+                  <td>Laboratorio</td>
+                  <td>10 may 2025</td>
+                  <td><button class="card-btn blue" style="font-size:11px;padding:4px 10px;">Descargar</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Ecografía mamaria</strong></td>
+                  <td>Radiología</td>
+                  <td>02 may 2025</td>
+                  <td><button class="card-btn blue" style="font-size:11px;padding:4px 10px;">Descargar</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SCREEN: DOCUMENTOS -->
+        <div class="screen" id="screen-documentos">
+          <div class="info-card">
+            <div class="info-card-title"><i class="ti ti-folder" style="color:#185FA5;"></i> Documentos digitales</div>
+            <table class="table-simple">
+              <thead>
+                <tr><th>Documento</th><th>Tipo</th><th>Fecha</th><th>Estado</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Pre-orden de Radiología</td>
+                  <td>Pre-Orden</td>
+                  <td>12 jun 2025</td>
+                  <td><span class="pill amber">Pendiente</span></td>
+                </tr>
+                <tr>
+                  <td>Receta — Medicina Oncológica</td>
+                  <td>Receta</td>
+                  <td>02 jun 2025</td>
+                  <td><span class="pill green">Entregada</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SCREEN: ACCESO FAMILIAR -->
+        <div class="screen" id="screen-familiar">
+          <div class="info-card" style="max-width:560px;">
+            <div class="info-card-title"><i class="ti ti-users" style="color:#185FA5;"></i> Acceso para cuidadora o familiar</div>
+            <div class="alert-block blue" style="margin-bottom:14px;">
+              <div class="alert-icon-wrap blue"><i class="ti ti-info-circle"></i></div>
+              <div class="alert-body">Tu cuidadora puede ver tu ruta oncológica, próximas citas y documentos usando el código de acceso. <strong>No podrá modificar nada.</strong> Es solo lectura.</div>
+            </div>
+            <div class="section-label">Código de acceso activo</div>
+            <div class="code-box">
+              <div class="code-val">R-4829</div>
+              <button class="copy-btn" onclick="copyCode(this)">
+                <i class="ti ti-copy"></i> Copiar código
+              </button>
+            </div>
+            <div style="font-size:12px; color:#8896A7; margin-top:8px;">Expira el 19 de junio de 2025 · Generado el 12 de junio</div>
+            <div style="margin-top:16px; display:flex; gap:10px;">
+              <button class="btn-primary">Generar nuevo código</button>
+              <button class="btn-secondary">Compartir por WhatsApp</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SCREEN: CONFIGURACIÓN -->
+        <div class="screen" id="screen-config">
+          <div class="info-card" style="max-width:560px;">
+            <div class="info-card-title"><i class="ti ti-settings" style="color:#185FA5;"></i> Configuración de cuenta</div>
+            <table class="table-simple">
+              <tr><td style="color:#8896A7;">Nombre</td><td><strong>María C. Quispe Huanca</strong></td></tr>
+              <tr><td style="color:#8896A7;">DNI</td><td>41203887</td></tr>
+              <tr><td style="color:#8896A7;">Celular</td><td>941-XXX-321</td></tr>
+              <tr><td style="color:#8896A7;">Idioma principal</td><td>Español</td></tr>
+              <tr><td style="color:#8896A7;">Idioma secundario</td><td>Quechua (Ayacucho)</td></tr>
+              <tr><td style="color:#8896A7;">Tamaño de texto</td><td>Normal</td></tr>
+              <tr><td style="color:#8896A7;">SMS recordatorios</td><td><span class="pill green">Activos</span></td></tr>
+              <tr><td style="color:#8896A7;">WhatsApp recordatorios</td><td><span class="pill green">Activos</span></td></tr>
+            </table>
+            <div style="margin-top:16px;">
+              <button class="btn-primary">Guardar cambios</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const screens = {
+  ruta:       { id: 'screen-ruta',       title: 'Mi ruta oncológica' },
+  citas:      { id: 'screen-citas',      title: 'Solicitud y consulta de citas' },
+  resultados: { id: 'screen-resultados', title: 'Consulta tus resultados' },
+  documentos: { id: 'screen-documentos', title: 'Documentos digitales' },
+  familiar:   { id: 'screen-familiar',   title: 'Acceso familiar' },
+  config:     { id: 'screen-config',     title: 'Configuración' },
+};
+
+function goTo(key) {
+  Object.values(screens).forEach(s => {
+    const el = document.getElementById(s.id);
+    if (el) el.classList.remove('active');
+  });
+  const t = screens[key];
+  if (t) {
+    document.getElementById(t.id).classList.add('active');
+    document.getElementById('topbar-title').textContent = t.title;
+  }
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const map = {
+    resultados: 0, citas: 1, documentos: 2, ruta: 3, config: 4, familiar: 5
+  };
+  const items = document.querySelectorAll('.nav-item');
+  if (map[key] !== undefined && items[map[key]]) {
+    items[map[key]].classList.add('active');
+  }
+}
+
+const texts = {
+  es: {
+    heroName: 'María C. Quispe Huanca',
+    heroDiag: 'Sospecha de cáncer de mama · Historia Clínica HC-4192031',
+    heroTag: '⏳ Paso 3 de 5 — Exámenes diagnósticos',
+    stepperTitle: 'Tu progreso en la ruta de diagnóstico',
+    s1:'Admisión', s2:'Médico\nespecialista', s3:'Exámenes\ndiagnósticos', s4:'Resultados', s5:'Diagnóstico\nfinal',
+    nextTitle: 'Tu próxima cita',
+    nextBody: '<strong>Lunes 16 de junio, 9:00 a.m.</strong><br>Departamento de Radiología<br>Piso 3 — Módulo B, ventanilla 4',
+    docsTitle: 'Documentos que debes llevar',
+    docsBody: '✔ DNI original<br>✔ Hoja de referencia de tu centro de salud<br>✔ Resultados de ecografía previa (si tienes)',
+    travelTitle: '¿Necesitas venir a Lima?',
+    travelBody: 'Sí, esta cita es <strong>presencial</strong>. Si vienes de provincia, el Servicio Social del INEN puede ayudarte con alojamiento y pasajes.',
+    remindersTitle: 'Recordatorios activos',
+    r1:'SMS al celular 941-XXX-321', r1s:'24 horas antes de cada cita',
+    r2:'WhatsApp al celular 941-XXX-321', r2s:'El mismo día de la cita',
+    r3:'Recordatorio de documentos', r3s:'48 horas antes de la cita',
+    familyTitle: 'Acceso para cuidadora',
+    familyDesc: 'Comparte este código con tu familiar o cuidadora para que pueda ver tu ruta sin necesidad de tu contraseña.',
+    familyNote: 'El código expira en 7 días. Puedes generar uno nuevo cuando quieras.',
+    quechuaVisible: false,
+  },
+  qu: {
+    heroName: 'María C. Quispe Huanca',
+    heroDiag: 'Unquyniki: Cáncer de mama sospecha · HC-4192031',
+    heroTag: '⏳ Kimsa ñanpi — Exámenes takyachiq',
+    stepperTitle: 'Ima ñanpi kachkankis',
+    s1:'Yaykuy', s2:'Hampiq\nespecialista', s3:'Exámenes\ntakyachiq', s4:'Resultados', s5:'Diagnóstico\ntukuy',
+    nextTitle: 'Hamunanki kayman',
+    nextBody: '<strong>Killapi 16 junio, 9:00 a.m.</strong><br>Radiología departamentopi<br>3ñiqin pisupi — Módulo B',
+    docsTitle: 'Apamuy kayta',
+    docsBody: '✔ DNI originalkita<br>✔ Hoja de referenciata wasiykimanta<br>✔ Ecografía resultadosniyuqta (tiyanki chayqa)',
+    travelTitle: '¿Limamanchu rinanki?',
+    travelBody: 'Ari, presencialmi kachkan. Provinciamanta jamunki chayqa, Servicio Social INEN yanapasunkim alojamientopi.',
+    remindersTitle: 'Willakunayki',
+    r1:'SMS celularniykiman 941-XXX-321', r1s:'24 horaña citamanta ñawpaqta',
+    r2:'WhatsApp celularniykiman 941-XXX-321', r2s:'Citanki punchawpi',
+    r3:'Documentokunata willay', r3s:'48 horaña citamanta ñawpaqta',
+    familyTitle: 'Familiarniykim yaykuynin',
+    familyDesc: 'Kay código nisqata cuidadoraniykiman quy, payqa ñanniykita rikunanpaq contraseñaykita mana munaspa.',
+    familyNote: '7 punchawpi tukun kay código. Munanki chayqa musuq codegota ruwanki.',
+    quechuaVisible: true,
+  }
+};
+
+function setLang(lang, btn) {
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const t = texts[lang];
+  const set = (id, val, html=false) => {
+    const el = document.getElementById(id);
+    if (el) html ? el.innerHTML = val : el.textContent = val;
+  };
+  set('hero-name', t.heroName);
+  set('hero-diag', t.heroDiag);
+  set('hero-tag', t.heroTag);
+  set('stepper-title', t.stepperTitle);
+  set('s1', t.s1); set('s2', t.s2); set('s3', t.s3); set('s4', t.s4); set('s5', t.s5);
+  set('next-title', t.nextTitle);
+  set('next-body', t.nextBody, true);
+  set('docs-title', t.docsTitle);
+  set('docs-body', t.docsBody, true);
+  set('travel-title', t.travelTitle);
+  set('travel-body', t.travelBody, true);
+  set('reminders-title', t.remindersTitle);
+  set('r1', t.r1); set('r1s', t.r1s);
+  set('r2', t.r2); set('r2s', t.r2s);
+  set('r3', t.r3); set('r3s', t.r3s);
+  set('family-title', t.familyTitle);
+  set('family-desc', t.familyDesc);
+  set('family-note', t.familyNote);
+  const qbox = document.getElementById('quechua-section');
+  if (qbox) qbox.style.display = t.quechuaVisible ? 'block' : 'none';
+}
+
+function copyCode(btn) {
+  navigator.clipboard.writeText('R-4829').catch(()=>{});
+  btn.innerHTML = '<i class="ti ti-check"></i> Copiado';
+  btn.style.color = '#0D6B50';
+  setTimeout(() => {
+    btn.innerHTML = '<i class="ti ti-copy"></i> Copiar';
+    btn.style.color = '';
+  }, 2000);
+}
+</script>
+</body>
+</html>
